@@ -29,8 +29,7 @@
   padding: 30px;
   overflow: scroll;
 }
-.chat__message,
-.chat__receiver {
+.chat__message {
   /* child class position absolute relative to this container, not the viewport */
   position: relative;
   font-size: 16px;
