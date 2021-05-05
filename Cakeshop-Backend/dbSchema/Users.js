@@ -1,10 +1,8 @@
 import mongoose from "mongoose";
 
-const Schema = mongoose.Schema;
+import validate from "../serviceFunctions/validate.js";
 
-import validate from "./validate.js";
-
-const usersSchema = Schema({
+const usersSchema = mongoose.Schema({
   email: {
     type: String,
     required: [true, "Email is required"],

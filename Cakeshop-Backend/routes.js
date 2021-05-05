@@ -1,26 +1,54 @@
 import express from "express";
-import Users from "./dbUsers.js";
+import Users from "./dbSchema/Users.js";
+import Cakes from "./dbSchema/Cake.js";
 import cloudinary from "./utils/cloudinary.js";
 import fileupload from "express-fileupload";
+import Token from "./serviceFunctions/createToken.js";
 
 const app = express.Router();
 
 app.use(fileupload({ useTempFiles: true }));
 
-// console.log(cloudinary.config);
-
 app.get("/", (req, res) => {
-  res.status(200).send("hello world");
+  res.status.send("Welcome to my Cakeshop API");
 });
 
-const rand = () => {
-  return Math.random().toString(36).substr(2); // remove `0.`
-};
+/* All Cakes API */
+app.get("/api/allcakes", (req, res) => {
+  Cakes.find({}, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      const cakes = [];
 
-const token = () => {
-  return rand() + rand(); // to make it longer
-};
+      for (const cake of data) {
+        const cakeData = {
+          cakeid: cake.cakeid,
+          image: cake.image,
+          name: cake.name,
+          price: cake.price,
+        };
+        cakes.push(cakeData);
+      }
 
+      res.status(200).send(cakes);
+    }
+  });
+});
+
+/* Get Cake API */
+app.get("/api/cake/:cakeid", (req, res) => {
+  // const cakeid = req.params.cakeid;
+  Cakes.find({ cakeid: req.params.cakeid }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+/* Register API */
 app.post("/api/register", (req, res) => {
   const userData = req.body;
 
@@ -32,7 +60,7 @@ app.post("/api/register", (req, res) => {
       if (count !== 0) {
         res.status(200).send({ message: "User already exists" });
       } else {
-        userData.token = token();
+        userData.token = Token.token();
         Users.create(userData, (err, data) => {
           if (err) {
             res.status(500).send(err);
@@ -45,6 +73,7 @@ app.post("/api/register", (req, res) => {
   });
 });
 
+/* Login API */
 app.post("/api/login", (req, res) => {
   const userData = req.body;
 
@@ -68,6 +97,7 @@ app.post("/api/login", (req, res) => {
   );
 });
 
+/* Image upload (cloudinary) API */
 app.post("/api/upload", (req, res) => {
   const file = req.files.file;
   const authtoken = req.headers.authtoken;
@@ -86,7 +116,36 @@ app.post("/api/upload", (req, res) => {
           }
         });
       } else {
-        res.send("Invalid user");
+        res.send("User authentication failed");
+      }
+    }
+  });
+});
+
+/* Add cake API */
+app.post("/api/addcake", (req, res) => {
+  const cakeDetails = req.body;
+  Users.find({ token: req.headers.authtoken }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      if (Object.keys(data).length === 0) {
+        res.status(200).send({ message: "User authentication failed" });
+      } else {
+        cakeDetails.owner = {
+          name: data[0].name,
+          email: data[0].email,
+        };
+        cakeDetails.createdate = new Date();
+        cakeDetails.cakeid = Date.now();
+
+        Cakes.create(cakeDetails, (err, data) => {
+          if (err) {
+            res.status(500).send(err);
+          } else {
+            res.status(201).send(data);
+          }
+        });
       }
     }
   });
