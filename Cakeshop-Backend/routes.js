@@ -1,6 +1,7 @@
 import express from "express";
 import Users from "./dbSchema/Users.js";
 import Cakes from "./dbSchema/Cake.js";
+import Carts from "./dbSchema/Cart.js";
 import cloudinary from "./utils/cloudinary.js";
 import fileupload from "express-fileupload";
 import Token from "./serviceFunctions/createToken.js";
@@ -38,7 +39,6 @@ app.get("/api/allcakes", (req, res) => {
 
 /* Get Cake API */
 app.get("/api/cake/:cakeid", (req, res) => {
-  // const cakeid = req.params.cakeid;
   Cakes.find({ cakeid: req.params.cakeid }, (err, data) => {
     if (err) {
       res.status(500).send(err);
@@ -116,7 +116,7 @@ app.post("/api/upload", (req, res) => {
           }
         });
       } else {
-        res.send("User authentication failed");
+        res.send("Session expired");
       }
     }
   });
@@ -130,7 +130,7 @@ app.post("/api/addcake", (req, res) => {
       res.status(500).send(err);
     } else {
       if (Object.keys(data).length === 0) {
-        res.status(200).send({ message: "User authentication failed" });
+        res.status(200).send({ message: "Session expired" });
       } else {
         cakeDetails.owner = {
           name: data[0].name,
@@ -144,6 +144,44 @@ app.post("/api/addcake", (req, res) => {
             res.status(500).send(err);
           } else {
             res.status(201).send(data);
+          }
+        });
+      }
+    }
+  });
+});
+
+/* Add to cart API */
+app.post("/api/addcaketocart", (req, res) => {
+  const cakeDetails = req.body;
+  const token = req.headers.authtoken;
+  Carts.exists({ cartid: token }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      if (!data) {
+        const cartItem = {
+          cartid: token,
+          cakes: [cakeDetails],
+        };
+        Carts.create(cartItem, (err, data) => {
+          if (err) {
+            res.status(500).send(err);
+          } else {
+            res.status(200).send(data);
+          }
+        });
+      } else {
+        Carts.findOneAndUpdate(
+          { cartid: token },
+          {
+            $push: { cakes: cakeDetails },
+          }
+        ).then((err, data) => {
+          if (err) {
+            res.send(err);
+          } else {
+            res.status(200).send(data);
           }
         });
       }
