@@ -8,7 +8,19 @@ const validatePassword = (password) => {
   return re.test(String(password));
 };
 
+const validatePhone = (phone) => {
+  const re = /\(?([0-9]{3})\)?([ .-]?)([0-9]{3})\2([0-9]{4})/;
+  return re.test(String(phone));
+};
+
+const validatePin = (pin) => {
+  const re = /^[1-9]{1}[0-9]{2}\s{0,1}[0-9]{3}$/;
+  return re.test(pin);
+};
+
 export default {
   validateEmail: validateEmail,
   validatePassword: validatePassword,
+  validatePhone: validatePhone,
+  validatePin: validatePin,
 };

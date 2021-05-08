@@ -2,6 +2,7 @@ import express from "express";
 import Users from "./dbSchema/Users.js";
 import Cakes from "./dbSchema/Cake.js";
 import Carts from "./dbSchema/Cart.js";
+import Orders from "./dbSchema/Order.js";
 import cloudinary from "./utils/cloudinary.js";
 import fileupload from "express-fileupload";
 import Token from "./serviceFunctions/createToken.js";
@@ -210,6 +211,37 @@ app.post("/api/cakecart", (req, res) => {
   const cakeDetails = req.body;
   const token = req.headers.authtoken;
   Carts.find({ cartid: token }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+app.post("/api/addcakeorder", (req, res) => {
+  const token = req.headers.authtoken;
+  const order = req.body;
+  order.orderdate = new Date();
+  order.orderid = `${token}${Date.now()}`;
+  Orders.create(order, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      Carts.deleteOne({ cartid: token }, (err, sent) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          data.message = "order placed";
+          res.status(201).send(data);
+        }
+      });
+    }
+  });
+});
+
+app.post("/api/cakeorders", (req, res) => {
+  Orders.find({ email: req.body.email }, (err, data) => {
     if (err) {
       res.status(500).send(err);
     } else {
