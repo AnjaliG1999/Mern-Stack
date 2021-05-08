@@ -189,4 +189,33 @@ app.post("/api/addcaketocart", (req, res) => {
   });
 });
 
+/* Add to cart API */
+app.post("/api/removecakefromcart", (req, res) => {
+  const cakeDetails = req.body;
+  const token = req.headers.authtoken;
+  Carts.updateOne(
+    { cartid: token },
+    { $pull: { cakes: { cakeid: cakeDetails.cakeid } } },
+    (err, data) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.status(200).send({ data, message: "Removed item from cart" });
+      }
+    }
+  );
+});
+
+app.post("/api/cakecart", (req, res) => {
+  const cakeDetails = req.body;
+  const token = req.headers.authtoken;
+  Carts.find({ cartid: token }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
 export default app;
