@@ -15,6 +15,21 @@ app.get("/", (req, res) => {
   res.status.send("Welcome to my Cakeshop API");
 });
 
+app.get("/api/searchcakes", (req, res) => {
+  const query = req.query.q;
+  let search = {};
+  if (query) {
+    search = { name: { $regex: query, $options: "i" } };
+  }
+  Cakes.find(search, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send({ data: data });
+    }
+  });
+});
+
 /* All Cakes API */
 app.get("/api/allcakes", (req, res) => {
   Cakes.find({}, (err, data) => {
